@@ -14,24 +14,31 @@ defmodule Xlsxir.ConvertDate do
 
   ## Example
 
-      iex> Xlsxir.ConvertDate.from_serial('27514')
+      iex> Xlsxir.ConvertDate.from_serial(~c"27514")
       {1975, 4, 30}
   """
   def from_serial(serial) do
-    f_serial = serial
-               |> convert_char_number
-               |> is_float
-               |> case do
-                    false -> List.to_integer(serial)
-                    true  -> serial
-                             |> List.to_float()
-                             |> Float.floor
-                             |> round
-                  end
+    f_serial =
+      serial
+      |> convert_char_number
+      |> is_float
+      |> case do
+        false ->
+          List.to_integer(serial)
+
+        true ->
+          serial
+          |> List.to_float()
+          |> Float.floor()
+          |> round
+      end
 
     # Convert to gregorian days and get date from that
-    gregorian = f_serial - 2 +               # adjust two days for first and last day since base year
-                date_to_days({1900, 1, 1})   # Add days in base year 1900
+    # adjust two days for first and last day since base year
+    # Add days in base year 1900
+    gregorian =
+      f_serial - 2 +
+        date_to_days({1900, 1, 1})
 
     gregorian
     |> days_to_date
@@ -44,17 +51,15 @@ defmodule Xlsxir.ConvertDate do
   @doc """
   Converts extracted number in `char_list` format to either `integer` or `float`.
   """
-  def convert_char_number(number) do
-    str = List.to_string(number)
+  def convert_char_number(char_list) do
+    str = List.to_string(char_list)
 
-    str
-    |> String.match?(~r/[.eE]/)
-    |> case do
-         false -> List.to_integer(number)
-         true  -> case Float.parse(str) do
-                    {f, _} -> f
-                        _  -> raise "Invalid Float"
-                  end
-       end
+    cond do
+      String.match?(str, ~r/[.eE]/) ->
+        with {float, ""} <- Float.parse(str), do: float, else: (_ -> str)
+
+      true ->
+        with {integer, ""} <- Integer.parse(str), do: integer, else: (_ -> str)
+    end
   end
 end

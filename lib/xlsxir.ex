@@ -4,7 +4,6 @@ defmodule Xlsxir do
   use Application
 
   def start(_type, _args) do
-
     children = [
       %{id: Xlsxir.StateManager, start: {Xlsxir.StateManager, :start_link, []}, type: :worker}
     ]
@@ -590,7 +589,8 @@ defmodule Xlsxir do
   """
   def close(tid) do
     if Enum.member?(:ets.all(), tid) do
-      if :ets.delete(tid), do: :ok, else: :error
+      :ets.delete(tid)
+      :ok
     else
       :ok
     end
